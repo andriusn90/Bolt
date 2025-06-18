@@ -47,3 +47,15 @@
 		bind:value={$config.rs_launch_command}
 	/>
 </div>
+<div class="p-2">
+	<label for="import_sh_path">Path to <code>import.sh</code> (for RS3 injection):</label>
+	<br />
+	<input
+		id="import_sh_path"
+		type="text"
+		class="w-full rounded border-2 border-slate-300 bg-slate-100 text-slate-950 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-50"
+		placeholder="/home/user/engine/import.sh"
+		bind:value={$config.import_sh_path}
+	/>
+	<small class="text-xs text-slate-500">Leave blank to disable automatic injection. The app will try to auto-detect <code>import.sh</code> in /engine/ if not set.</small>
+</div>

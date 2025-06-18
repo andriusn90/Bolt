@@ -30,6 +30,8 @@ export function launchRS3Linux(
 		} else {
 			params.config_uri = bolt.env.default_config_uri;
 		}
+		if (config.import_sh_path && config.import_sh_path.trim() !== '')
+			params.import_sh_path = config.import_sh_path.trim();
 		xml.open('POST', '/launch-rs3-deb?'.concat(new URLSearchParams(params).toString()), true);
 		xml.onreadystatechange = () => {
 			if (xml.readyState == 4) {

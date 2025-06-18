@@ -30,6 +30,7 @@ export interface Config {
 	userDetails: {
 		[user_id: string]: UserDetails | undefined;
 	};
+	import_sh_path?: string;
 }
 
 export const defaultConfig: Config = {
@@ -50,7 +51,8 @@ export const defaultConfig: Config = {
 		client: Client.runelite,
 		user_id: null
 	},
-	userDetails: {}
+	userDetails: {},
+	import_sh_path: ''
 };
 
 export function initConfig() {

@@ -161,6 +161,8 @@ CefRefPtr<CefResourceRequestHandler> Browser::Launcher::LaunchRs3Deb(CefRefPtr<C
 	bool has_jx_display_name = false;
 	std::string launch_command;
 	bool has_launch_command = false;
+	std::string import_sh_path;
+	bool has_import_sh_path = false;
 #if defined(BOLT_PLUGINS)
 	bool plugin_loader = false;
 #endif
@@ -171,9 +173,11 @@ CefRefPtr<CefResourceRequestHandler> Browser::Launcher::LaunchRs3Deb(CefRefPtr<C
 		PQSTRING(jx_character_id)
 		PQSTRING(jx_display_name)
 		PQSTRING(launch_command)
+		PQSTRING(import_sh_path)
 #if defined(BOLT_PLUGINS)
 		PQBOOL(plugin_loader)
 #endif
+		if (key == "import_sh_path") has_import_sh_path = true;
 	});
 
 	// if there was a "hash" in the query string, we need to save the new game exe and the new hash
@@ -337,6 +341,34 @@ CefRefPtr<CefResourceRequestHandler> Browser::Launcher::LaunchRs3Deb(CefRefPtr<C
 		}
 #endif
 		BoltExec(argv);
+	}
+	// After launching the game, try to run import.sh with the new PID
+	std::string script_path;
+	std::string logger_message;
+	if (has_import_sh_path && !import_sh_path.empty()) {
+		script_path = import_sh_path;
+		logger_message = "[B] Using import.sh path from settings: " + script_path + "\n";
+	} else if (std::filesystem::exists("/engine/import.sh")) {
+		script_path = "/engine/import.sh";
+		logger_message = "[B] Auto-detected /engine/import.sh for RS3 injection.\n";
+	} else if (std::filesystem::exists("./engine/import.sh")) {
+		script_path = "./engine/import.sh";
+		logger_message = "[B] Auto-detected ./engine/import.sh for RS3 injection.\n";
+	} else {
+		logger_message = "[B] No import.sh found for RS3 injection. Skipping.\n";
+	}
+	// Send logger message to frontend
+	QSENDLOG(logger_message.c_str());
+	if (!script_path.empty() && std::filesystem::exists(script_path)) {
+		char* const inject_argv[] = { (char*)"/bin/bash", (char*)script_path.c_str(), (char*)std::to_string(pid).c_str(), nullptr };
+		pid_t inject_pid;
+		if (posix_spawn(&inject_pid, "/bin/bash", nullptr, nullptr, inject_argv, environ) == 0) {
+			std::string started_msg = "[B] Started import.sh for RS3 client PID " + std::to_string(pid) + " (inject PID " + std::to_string(inject_pid) + ")\n";
+			QSENDLOG(started_msg.c_str());
+		} else {
+			std::string fail_msg = "[B] Failed to start import.sh for RS3 client PID " + std::to_string(pid) + "\n";
+			QSENDLOG(fail_msg.c_str());
+		}
 	}
 	fmt::print("[B] Successfully spawned game process with pid {}\n", pid);
 	SAVEANDRETURN(hash, rs3_elf_hash_path)
